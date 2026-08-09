@@ -1,3 +1,8 @@
 ---
-return Astro.redirect(`${import.meta.env.BASE_URL}#ensaios`);
+import { getVisibleEssays } from "../../lib/essays";
+
+const hasEssays = (await getVisibleEssays()).length > 0;
+
+if (hasEssays) return Astro.redirect(`${import.meta.env.BASE_URL}#ensaios`);
+return Astro.redirect(import.meta.env.BASE_URL);
 ---

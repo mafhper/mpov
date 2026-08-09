@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const astroPath = path.join(projectRoot, "node_modules", "astro", "bin", "astro.mjs");
+const linkCheckPath = path.join(projectRoot, "scripts", "check-links.mjs");
 const outDir = path.join(projectRoot, "tests", ".generated-empty-dist");
 const contentRoot = path.join(projectRoot, "tests", ".generated-empty-content");
 const cacheDir = path.join(projectRoot, "tests", ".generated-empty-cache");
@@ -37,6 +38,27 @@ function build() {
   });
 }
 
+function checkLinks() {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [linkCheckPath], {
+      cwd: projectRoot,
+      env: environment,
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    let output = "";
+    child.stdout.on("data", (chunk) => {
+      output += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      output += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", (code) => resolve({ code: code ?? 1, output }));
+  });
+}
+
 try {
   await rm(outDir, { recursive: true, force: true });
   await rm(contentRoot, { recursive: true, force: true });
@@ -44,6 +66,10 @@ try {
   await mkdir(path.join(contentRoot, "ensaios"), { recursive: true });
   const result = await build();
   if (result.code !== 0) throw new Error("A build vazia falhou:\n" + result.output);
+  const links = await checkLinks();
+  if (links.code !== 0) {
+    throw new Error("A verificação de links da build vazia falhou:\n" + links.output);
+  }
   const [home, sitemap] = await Promise.all([
     readFile(path.join(outDir, "index.html"), "utf8"),
     readFile(path.join(outDir, "sitemap-0.xml"), "utf8"),

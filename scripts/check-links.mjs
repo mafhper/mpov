@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const distRoot = path.join(repoRoot, "dist");
+const distRoot = path.resolve(repoRoot, process.env.MPOV_OUT_DIR?.trim() || "dist");
 const basePath = "/mpov";
 
 async function htmlFiles(directory) {
