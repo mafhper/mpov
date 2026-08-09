@@ -1,0 +1,54 @@
+{
+  "name": "mpov",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "studio": "node scripts/studio-server.mjs",
+    "studio:launch": "node scripts/studio-launcher.mjs",
+    "build": "astro build && npm run report:build && npm run check:links && npm run check:studio-boundary",
+    "preview": "astro preview",
+    "check": "npm run type-check && npm run validate:content && npm run check:content-boundary",
+    "type-check": "astro check",
+    "validate:content": "node scripts/validate-content.mjs",
+    "report:build": "node scripts/report-build.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "check:studio-boundary": "node scripts/check-studio-boundary.mjs",
+    "check:content-boundary": "node scripts/check-content-boundary.mjs",
+    "publish:check": "npm run format:check && npm run check && npm run lint && npm test && npm run check:studio-boundary",
+    "smoke:deploy": "node scripts/smoke-deploy.mjs",
+    "prepare:images": "node scripts/prepare-images.mjs",
+    "new:essay": "node scripts/new-essay.mjs",
+    "remove:essay": "node scripts/remove-essay.mjs",
+    "ensaio:novo": "node scripts/new-essay.mjs",
+    "fotos:preparar": "node scripts/prepare-images.mjs",
+    "ensaio:remover": "node scripts/remove-essay.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint scripts --ext .js,.mjs",
+    "test": "node --test",
+    "test:empty": "node scripts/verify-empty-build.mjs",
+    "test:e2e": "node scripts/run-e2e.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "latest",
+    "@astrojs/sitemap": "latest",
+    "astro": "latest",
+    "sharp": "latest",
+    "yaml": "latest"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "latest",
+    "@eslint/js": "latest",
+    "@playwright/test": "latest",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "globals": "latest",
+    "prettier": "latest",
+    "typescript": "latest"
+  }
+}

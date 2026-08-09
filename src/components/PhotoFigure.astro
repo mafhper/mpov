@@ -1,0 +1,56 @@
+---
+import { Picture } from "astro:assets";
+import { withBase } from "../config/site";
+import { getPhotoPresentation } from "../lib/editorial";
+import type { PhotoEntry } from "../lib/essays";
+
+interface Props {
+  photo: PhotoEntry;
+  essayId: string;
+  eager?: boolean;
+  index: number;
+}
+
+const { photo, essayId, eager = false, index } = Astro.props;
+const href = withBase(`/ensaios/${essayId}/#${photo.id}`);
+const presentation = getPhotoPresentation(photo);
+const folio = String(index + 1).padStart(2, "0");
+---
+
+<figure
+  id={photo.id}
+  class:list={[
+    "photo-figure",
+    `photo-figure--${photo.display}`,
+    `photo-figure--crop-${presentation.crop}`,
+    `photo-figure--focal-${presentation.focalPoint}`,
+    `photo-figure--placement-${presentation.placement}`,
+    { "photo-figure--has-caption": Boolean(photo.caption) },
+  ]}
+>
+  <a
+    class="photo-link"
+    href={href}
+    data-lightbox-item
+    data-lightbox-caption={photo.caption ?? ""}
+    data-lightbox-essay={essayId}
+    data-lightbox-id={photo.id}
+    data-lightbox-essay-href={withBase(`/ensaios/${essayId}/`)}
+    aria-label={`Ampliar foto ${index + 1}`}
+  >
+    <Picture
+      src={photo.src}
+      alt={photo.alt}
+      formats={["webp", "jpeg"]}
+      widths={[960, 1600, 2400]}
+      sizes="(min-width: 1200px) 1100px, 100vw"
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      fetchpriority={eager ? "high" : undefined}
+    />
+  </a>
+  <figcaption class:list={{ "photo-caption--number-only": !photo.caption }}>
+    <span class="photo-caption__number" aria-hidden="true">{folio}</span>
+    {photo.caption ? <span class="photo-caption__copy">{photo.caption}</span> : null}
+  </figcaption>
+</figure>

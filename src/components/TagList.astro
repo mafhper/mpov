@@ -1,0 +1,22 @@
+---
+import { withBase } from "../config/site";
+import { tagLabel } from "../lib/editorial";
+
+interface Props {
+  tags?: string[];
+  label?: string;
+  compact?: boolean;
+}
+
+const { tags = [], label = "Hashtags", compact = false } = Astro.props;
+---
+
+{
+  tags.length ? (
+    <ul class:list={["tag-list", { "tag-list--compact": compact }]} aria-label={label}>
+      {tags.map((tag) => (
+        <li><a href={withBase(`/temas/${tag}/`)}>{tagLabel(tag)}</a></li>
+      ))}
+    </ul>
+  ) : null
+}

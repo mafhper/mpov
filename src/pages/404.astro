@@ -1,0 +1,14 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../config/site";
+---
+
+<BaseLayout title="Isso não está aqui.">
+  <main id="conteudo" class="not-found">
+    <div>
+      <h1>Isso não está mais aqui.</h1>
+      <p class="not-found__status">404</p>
+      <a class="text-link" href={withBase("/")}>Voltar ao início <span aria-hidden="true">↗</span></a>
+    </div>
+  </main>
+</BaseLayout>

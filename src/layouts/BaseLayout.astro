@@ -1,0 +1,117 @@
+---
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { absoluteUrl, siteConfig } from "../config/site";
+import { chromeThemeStyle, type EssayTheme } from "../lib/editorial";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  editorialTheme?: EssayTheme;
+}
+
+const {
+  title = siteConfig.title,
+  description = siteConfig.description,
+  ogImage = "/og.svg",
+  editorialTheme,
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, siteConfig.url).toString();
+const socialImage = absoluteUrl(ogImage);
+const pageTitle = title === siteConfig.title ? title : `${title} · ${siteConfig.title}`;
+const editorialChromeStyle = chromeThemeStyle(editorialTheme);
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="robots" content="index, follow, noimageindex" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={absoluteUrl("/favicon.svg")} />
+    <link rel="sitemap" href={absoluteUrl("/sitemap-index.xml")} />
+    <meta property="og:site_name" content={siteConfig.title} />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:alt" content={siteConfig.title} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <title>{pageTitle}</title>
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem("mpov-theme");
+          if (saved === "light" || saved === "dark") {
+            document.documentElement.dataset.theme = saved;
+          }
+        } catch {
+          // A blocked localStorage must not prevent the page from rendering.
+        }
+      })();
+    </script>
+  </head>
+  <body
+    class:list={{ "editorial-page": Boolean(editorialTheme) }}
+    data-editorial-palette={editorialTheme?.palette}
+    style={editorialChromeStyle}
+  >
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <SiteHeader pathname={Astro.url.pathname} />
+    <slot />
+    <SiteFooter />
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const buttons = document.querySelectorAll("[data-theme-toggle]");
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+        const currentTheme = () => root.dataset.theme || (media.matches ? "dark" : "light");
+
+        const updateButtons = () => {
+          const theme = currentTheme();
+          const nextTheme = theme === "dark" ? "light" : "dark";
+          const actionLabel = `Usar tema ${nextTheme === "dark" ? "escuro" : "claro"}`;
+          buttons.forEach((button) => {
+            button.setAttribute("aria-pressed", String(theme === "dark"));
+            button.setAttribute("aria-label", actionLabel);
+            const label = button.querySelector("[data-theme-label]");
+            if (label) label.textContent = actionLabel;
+          });
+        };
+
+        buttons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const next = currentTheme() === "dark" ? "light" : "dark";
+            root.dataset.theme = next;
+            try {
+              localStorage.setItem("mpov-theme", next);
+            } catch {
+              // Theme still works for the current visit without storage.
+            }
+            updateButtons();
+          });
+        });
+
+        media.addEventListener?.("change", () => {
+          try {
+            if (!localStorage.getItem("mpov-theme")) updateButtons();
+          } catch {
+            updateButtons();
+          }
+        });
+        updateButtons();
+      })();
+    </script>
+  </body>
+</html>

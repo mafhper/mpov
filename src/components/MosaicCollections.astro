@@ -1,0 +1,84 @@
+---
+import { Picture } from "astro:assets";
+import { siteConfig, withBase } from "../config/site";
+import { customThemeStyle, focalPositions, getEssayTheme, getPhotoPresentation } from "../lib/editorial";
+import { essaySlug, formatShortDate, photoUrl, type EssayEntry } from "../lib/essays";
+import Lightbox from "./Lightbox.astro";
+import TagList from "./TagList.astro";
+
+interface Props {
+  essays: EssayEntry[];
+}
+
+const { essays } = Astro.props;
+const separated = siteConfig.mosaicGrouping === "separated";
+---
+
+<div class:list={["mosaic-collections", { "mosaic-collections--continuous": !separated }]}>
+  {
+    essays.map((essay) => {
+      const theme = getEssayTheme(essay.data.theme);
+      const slug = essaySlug(essay);
+      return (
+        <section
+          class="mosaic-essay"
+          data-essay-palette={theme.palette}
+          data-essay-typography={theme.typography}
+          style={customThemeStyle(theme)}
+          aria-labelledby={`mosaico-${slug}`}
+        >
+          {separated ? (
+            <header class="mosaic-essay__heading">
+              <div>
+                <p class="meta-line">
+                  {formatShortDate(essay.data.date)} · {essay.data.photos.length}{" "}
+                  {essay.data.photos.length === 1 ? "fotografia" : "fotografias"}
+                </p>
+                <h2 id={`mosaico-${slug}`}>
+                  <a href={withBase(`/ensaios/${slug}/`)}>{essay.data.title}</a>
+                </h2>
+              </div>
+              <div class="mosaic-essay__aside">
+                <TagList tags={essay.data.tags} compact />
+                <a class="mosaic-essay__open" href={withBase(`/ensaios/${slug}/`)}>
+                  Ver ensaio <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </header>
+          ) : (
+            <h2 id={`mosaico-${slug}`} class="sr-only">{essay.data.title}</h2>
+          )}
+          <div class="mosaic-grid">
+            {essay.data.photos.map((photo) => {
+              const presentation = getPhotoPresentation(photo);
+              return (
+                <a
+                  class="mosaic-item"
+                  href={withBase(photoUrl(slug, photo.id))}
+                  data-lightbox-item
+                  data-lightbox-caption={photo.caption ?? ""}
+                  data-lightbox-essay={slug}
+                  data-lightbox-id={photo.id}
+                  data-lightbox-essay-href={withBase(`/ensaios/${slug}/`)}
+                  aria-label={`${photo.alt}. Ensaio: ${essay.data.title}`}
+                >
+                  <Picture
+                    src={photo.src}
+                    alt={photo.alt}
+                    formats={["webp", "jpeg"]}
+                    widths={[320, 640]}
+                    sizes="(min-width: 1500px) 16vw, (min-width: 1100px) 20vw, (min-width: 700px) 25vw, 50vw"
+                    loading="lazy"
+                    class="mosaic-image"
+                    style={{ objectPosition: focalPositions[presentation.focalPoint] }}
+                  />
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      );
+    })
+  }
+</div>
+<Lightbox />

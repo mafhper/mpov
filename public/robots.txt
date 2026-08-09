@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mafhper.github.io/mpov/sitemap-index.xml

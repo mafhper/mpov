@@ -1,0 +1,121 @@
+<div class="lightbox" data-lightbox-root hidden aria-hidden="true">
+  <div class="lightbox__backdrop" data-lightbox-close></div>
+  <div class="lightbox__dialog" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+    <div class="lightbox__toolbar">
+      <p id="lightbox-title" class="sr-only">Fotografia ampliada</p>
+      <p class="lightbox__count" data-lightbox-count aria-live="polite"></p>
+      <button class="lightbox__close" type="button" data-lightbox-close>Fechar</button>
+    </div>
+    <div class="lightbox__stage">
+      <button class="lightbox__control" type="button" data-lightbox-prev aria-label="Fotografia anterior">←</button>
+      <img data-lightbox-image alt="" />
+      <button class="lightbox__control" type="button" data-lightbox-next aria-label="Próxima fotografia">→</button>
+    </div>
+    <div class="lightbox__caption">
+      <p data-lightbox-caption></p>
+      <a data-lightbox-essay-link href="#">Ver no ensaio <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const root = document.querySelector<HTMLElement>("[data-lightbox-root]");
+  const triggers = [...document.querySelectorAll<HTMLElement>("[data-lightbox-item]")];
+
+  if (root && triggers.length) {
+    const image = root.querySelector<HTMLImageElement>("[data-lightbox-image]");
+    const caption = root.querySelector<HTMLElement>("[data-lightbox-caption]");
+    const count = root.querySelector<HTMLElement>("[data-lightbox-count]");
+    const essayLink = root.querySelector<HTMLAnchorElement>("[data-lightbox-essay-link]");
+    const closeButtons = root.querySelectorAll<HTMLButtonElement | HTMLDivElement>("[data-lightbox-close]");
+    const previous = root.querySelector<HTMLButtonElement>("[data-lightbox-prev]");
+    const next = root.querySelector<HTMLButtonElement>("[data-lightbox-next]");
+    let activeIndex = -1;
+    let restoreFocus: HTMLElement | null = null;
+    let pushedState = false;
+    let pointerStart: number | null = null;
+
+    const focusable = () =>
+      [...root.querySelectorAll<HTMLElement>("button, a[href]")].filter(
+        (item) => !item.hasAttribute("disabled"),
+      );
+
+    const render = (index: number) => {
+      activeIndex = (index + triggers.length) % triggers.length;
+      const trigger = triggers[activeIndex];
+      const source = trigger.querySelector<HTMLImageElement>("img");
+      if (!source || !image || !caption || !count || !essayLink) return;
+      image.src = source.currentSrc || source.src;
+      image.alt = source.alt;
+      image.width = source.naturalWidth || source.width;
+      image.height = source.naturalHeight || source.height;
+      caption.textContent = trigger.dataset.lightboxCaption || "";
+      essayLink.href = trigger.dataset.lightboxEssayHref || trigger.getAttribute("href") || "#";
+      count.textContent = `${activeIndex + 1} / ${triggers.length}`;
+    };
+
+    const open = (index: number) => {
+      restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      render(index);
+      root.hidden = false;
+      root.setAttribute("aria-hidden", "false");
+      document.body.classList.add("lightbox-open");
+      history.pushState({ mpovLightbox: true }, "", `${location.pathname}#${triggers[activeIndex].dataset.lightboxId}`);
+      pushedState = true;
+      root.querySelector<HTMLElement>("[data-lightbox-close]")?.focus();
+    };
+
+    const close = (fromPopState = false) => {
+      root.hidden = true;
+      root.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("lightbox-open");
+      if (pushedState && !fromPopState) history.back();
+      pushedState = false;
+      restoreFocus?.focus?.();
+      restoreFocus = null;
+    };
+
+    triggers.forEach((trigger, index) => {
+      trigger.addEventListener("click", (event: MouseEvent) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        open(index);
+      });
+    });
+
+    closeButtons.forEach((button) => button.addEventListener("click", () => close()));
+    previous?.addEventListener("click", () => render(activeIndex - 1));
+    next?.addEventListener("click", () => render(activeIndex + 1));
+    root.addEventListener("pointerdown", (event: PointerEvent) => {
+      pointerStart = event.clientX;
+    });
+    root.addEventListener("pointerup", (event: PointerEvent) => {
+      if (pointerStart === null || Math.abs(event.clientX - pointerStart) < 48) return;
+      render(activeIndex + (event.clientX < pointerStart ? 1 : -1));
+      pointerStart = null;
+    });
+    document.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (root.hidden) return;
+      if (event.key === "Escape") close();
+      if (event.key === "ArrowLeft") render(activeIndex - 1);
+      if (event.key === "ArrowRight") render(activeIndex + 1);
+      if (event.key === "Tab") {
+        const items = focusable();
+        if (!items.length) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+    window.addEventListener("popstate", () => {
+      if (!root.hidden) close(true);
+    });
+    root.dataset.lightboxReady = "true";
+  }
+</script>

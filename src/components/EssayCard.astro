@@ -1,0 +1,46 @@
+---
+import { withBase } from "../config/site";
+import TagList from "./TagList.astro";
+import { focalPositions, getPhotoPresentation } from "../lib/editorial";
+import { essaySlug, formatShortDate, getCover, type EssayEntry } from "../lib/essays";
+import { Picture } from "astro:assets";
+
+interface Props {
+  essay: EssayEntry;
+  index?: number;
+}
+
+const { essay, index = 0 } = Astro.props;
+const cover = getCover(essay);
+const reverse = index % 2 === 1;
+const slug = essaySlug(essay);
+const coverPresentation = cover ? getPhotoPresentation(cover) : undefined;
+const folio = String(index + 1).padStart(2, "0");
+---
+
+<article class:list={["essay-row", { "essay-row--reverse": reverse }]}>
+  <a class="essay-row__media" href={withBase(`/ensaios/${slug}/`)}>
+    {
+      cover ? (
+        <Picture
+          src={cover.src}
+          alt={cover.alt}
+          formats={["webp", "jpeg"]}
+          widths={[640, 960, 1280]}
+          sizes="(min-width: 900px) 50vw, 100vw"
+          loading={index < 2 ? "eager" : "lazy"}
+          class="thumb-image"
+          style={coverPresentation ? { objectPosition: focalPositions[coverPresentation.focalPoint] } : undefined}
+        />
+      ) : null
+    }
+  </a>
+  <div class="essay-row__copy">
+    <p class="essay-row__folio" aria-hidden="true">{folio}</p>
+    <p class="meta-line">{formatShortDate(essay.data.date)}{essay.data.location ? ` · ${essay.data.location}` : ""}</p>
+    <h2><a href={withBase(`/ensaios/${slug}/`)}>{essay.data.title}</a></h2>
+    {essay.data.excerpt ? <p class="essay-row__excerpt">{essay.data.excerpt}</p> : null}
+    <TagList tags={essay.data.tags} compact />
+    <a class="text-link" href={withBase(`/ensaios/${slug}/`)}>Ler ensaio <span aria-hidden="true">↗</span></a>
+  </div>
+</article>

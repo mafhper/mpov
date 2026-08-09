@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Lightbox from "../../components/Lightbox.astro";
+import { Picture } from "astro:assets";
+import { withBase } from "../../config/site";
+import { focalPositions, getPhotoPresentation, tagLabel } from "../../lib/editorial";
+import { essaySlug, formatShortDate, getVisibleEssays, photoUrl } from "../../lib/essays";
+
+export async function getStaticPaths() {
+  const essays = await getVisibleEssays();
+  const tags = [...new Set(essays.flatMap((essay) => essay.data.tags ?? []))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: { tag, essays: essays.filter((essay) => essay.data.tags?.includes(tag)) },
+  }));
+}
+
+const { tag, essays } = Astro.props;
+---
+
+<BaseLayout title={tagLabel(tag)} description={`Ensaios sobre ${tagLabel(tag)}.`}>
+  <main id="conteudo" class="page-main container">
+    <header class="page-heading topic-heading">
+      <div>
+        <a class="topic-heading__back" href={`${withBase("/")}#ensaios`}>Voltar à publicação</a>
+        <h1>{tagLabel(tag)}</h1>
+      </div>
+      <p>{essays.length} {essays.length === 1 ? "ensaio relacionado" : "ensaios relacionados"} agora.</p>
+    </header>
+    <div class="tag-publications">
+      {essays.map((essay) => {
+        const slug = essaySlug(essay);
+        return (
+          <section class="tag-publication" aria-labelledby={`tag-${slug}`}>
+            <header class="tag-publication__heading">
+              <div>
+                <p class="meta-line">{formatShortDate(essay.data.date)}{essay.data.location ? ` · ${essay.data.location}` : ""}</p>
+                <h2 id={`tag-${slug}`}><a href={withBase(`/ensaios/${slug}/`)}>{essay.data.title}</a></h2>
+              </div>
+              {essay.data.excerpt ? <p>{essay.data.excerpt}</p> : null}
+            </header>
+            <div class="tag-photo-grid">
+              {essay.data.photos.map((photo) => {
+                const presentation = getPhotoPresentation(photo);
+                return (
+                  <a
+                    class="tag-photo"
+                    href={withBase(photoUrl(slug, photo.id))}
+                    data-lightbox-item
+                    data-lightbox-caption={photo.caption ?? ""}
+                    data-lightbox-essay={slug}
+                    data-lightbox-id={photo.id}
+                    data-lightbox-essay-href={withBase(`/ensaios/${slug}/`)}
+                    aria-label={`${photo.alt}. Ensaio: ${essay.data.title}`}
+                  >
+                    <Picture
+                      src={photo.src}
+                      alt={photo.alt}
+                      formats={["webp", "jpeg"]}
+                      widths={[320, 640]}
+                      sizes="(min-width: 900px) 20vw, (min-width: 560px) 33vw, 50vw"
+                      loading="lazy"
+                      style={{ objectPosition: focalPositions[presentation.focalPoint] }}
+                    />
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+    <Lightbox />
+  </main>
+</BaseLayout>

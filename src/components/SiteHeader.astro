@@ -1,0 +1,35 @@
+---
+import { siteConfig, withBase } from "../config/site";
+
+interface Props {
+  pathname: string;
+}
+
+const { pathname } = Astro.props;
+const links = [
+  { href: "/sobre/", label: "Sobre", match: "/sobre" },
+];
+
+function isCurrent(match: string) {
+  return pathname === withBase(match) || pathname.startsWith(`${withBase(match)}/`);
+}
+---
+
+<header class="site-header">
+  <div class="site-header__inner container">
+    <a class="brand" href={withBase("/")} aria-label={`${siteConfig.title}, início`}>
+      <span class="brand__name">{siteConfig.title}</span>
+      <span class="brand__author">por {siteConfig.author}</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Navegação principal">
+      {
+        links.map((link) => (
+          <a href={withBase(link.href)} aria-current={isCurrent(link.match) ? "page" : undefined}>
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</header>

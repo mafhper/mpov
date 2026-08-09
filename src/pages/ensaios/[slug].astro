@@ -1,0 +1,83 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Lightbox from "../../components/Lightbox.astro";
+import PhotoFigure from "../../components/PhotoFigure.astro";
+import TagList from "../../components/TagList.astro";
+import { customThemeStyle, getEssayTheme } from "../../lib/editorial";
+import { essaySlug, formatDate, getVisibleEssays } from "../../lib/essays";
+import { withBase } from "../../config/site";
+
+export async function getStaticPaths() {
+  const essays = await getVisibleEssays();
+  return essays.map((essay) => ({ params: { slug: essaySlug(essay) }, props: { essay } }));
+}
+
+type Props = { essay: CollectionEntry<"essays"> };
+const { essay } = Astro.props as Props;
+const { Content } = await render(essay);
+const essays = await getVisibleEssays();
+const index = essays.findIndex((item) => essaySlug(item) === essaySlug(essay));
+const older = essays[index + 1];
+const newer = essays[index - 1];
+const theme = getEssayTheme(essay.data.theme);
+---
+
+<BaseLayout title={essay.data.title} description={essay.data.excerpt ?? essay.data.title} editorialTheme={theme}>
+  <main id="conteudo" class="essay-main">
+    <article
+      class="essay"
+      data-essay-palette={theme.palette}
+      data-essay-typography={theme.typography}
+      data-essay-header={theme.header}
+      data-essay-title-align={theme.headerAlignment}
+      data-essay-title-scale={theme.headerScale}
+      data-essay-title-font={theme.headerFont}
+      style={customThemeStyle(theme)}
+    >
+      <header class="essay-intro container">
+        <div class="essay-intro__meta">
+          <p class="meta-line">{formatDate(essay.data.date)}{essay.data.location ? ` · ${essay.data.location}` : ""}</p>
+          <p>{essay.data.photos.length} {essay.data.photos.length === 1 ? "fotografia" : "fotografias"}</p>
+        </div>
+        <h1>{essay.data.title}</h1>
+        <div class="essay-intro__context">
+          <div class="essay-intro__body"><Content /></div>
+          <TagList tags={essay.data.tags} />
+        </div>
+      </header>
+
+      <div
+        class:list={["essay-gallery", `essay-gallery--${essay.data.layout}`]}
+        data-gallery-layout={essay.data.layout}
+      >
+        {essay.data.photos.map((photo, index) => (
+          <PhotoFigure photo={photo} essayId={essaySlug(essay)} index={index} eager={index === 0} />
+        ))}
+      </div>
+      {
+        older || newer ? (
+          <nav class="essay-nav" aria-label="Navegação entre ensaios">
+            <div>
+              {older ? (
+                <a href={withBase(`/ensaios/${essaySlug(older)}/`)}>
+                  <span class="meta-line">← Mais antigo</span>
+                  <strong>{older.data.title}</strong>
+                </a>
+              ) : null}
+            </div>
+            <div>
+              {newer ? (
+                <a href={withBase(`/ensaios/${essaySlug(newer)}/`)}>
+                  <span class="meta-line">Mais recente →</span>
+                  <strong>{newer.data.title}</strong>
+                </a>
+              ) : null}
+            </div>
+          </nav>
+        ) : null
+      }
+    </article>
+  </main>
+  <Lightbox />
+</BaseLayout>

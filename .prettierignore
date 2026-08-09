@@ -1,0 +1,17 @@
+node_modules
+dist
+.astro
+playwright-report
+test-results
+tests/.generated-content
+tests/.generated-dist
+tests/.generated-cache
+tests/.generated-empty-dist
+tests/.generated-empty-content
+tests/.generated-empty-cache
+.mpov-local
+src/data/site.json
+src/content/ensaios/**/*.md
+src/content/ensaios/**/*.jpg
+src/content/ensaios/**/*.jpeg
+src/content/ensaios/**/*.webp

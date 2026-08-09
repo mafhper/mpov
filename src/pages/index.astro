@@ -1,0 +1,107 @@
+---
+import { Picture } from "astro:assets";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import EmptyState from "../components/EmptyState.astro";
+import EssayCard from "../components/EssayCard.astro";
+import MosaicCollections from "../components/MosaicCollections.astro";
+import { focalPositions, getPhotoPresentation } from "../lib/editorial";
+import { essaySlug, formatShortDate, getCover, getVisibleEssays } from "../lib/essays";
+import { siteConfig, withBase } from "../config/site";
+
+const essays = await getVisibleEssays();
+const latest = essays[0];
+const cover = latest ? getCover(latest) : undefined;
+const remaining = essays.slice(1);
+const latestSlug = latest ? essaySlug(latest) : undefined;
+const coverPresentation = cover ? getPhotoPresentation(cover) : undefined;
+---
+
+<BaseLayout title={siteConfig.title}>
+  <main id="conteudo" class="home-main container">
+    {
+      latest && cover && latestSlug ? (
+        <>
+          <header class="publication-toolbar">
+            <div>
+              <h1 class="page-heading__eyebrow">Publicação atual</h1>
+              <p>{essays.length} {essays.length === 1 ? "ensaio" : "ensaios"} · {essays.reduce((total, essay) => total + essay.data.photos.length, 0)} fotografias</p>
+            </div>
+            <nav class="view-switcher" aria-label="Visualização da publicação">
+              <a href="#ensaios" data-view-control="ensaios">Ensaios</a>
+              <a href="#mosaico" data-view-control="mosaico">Mosaico</a>
+            </nav>
+          </header>
+
+          <section id="ensaios" class="home-view" data-home-panel="ensaios" aria-label="Visualização por ensaios">
+            <section class="home-feature" aria-labelledby="latest-title">
+              <a class="feature-link" href={withBase(`/ensaios/${latestSlug}/`)}>
+                <Picture
+                  src={cover.src}
+                  alt={cover.alt}
+                  formats={["webp", "jpeg"]}
+                  widths={[960, 1400, 1800]}
+                  sizes="(min-width: 900px) 65vw, 100vw"
+                  loading="eager"
+                  fetchpriority="high"
+                  class="feature-image"
+                  style={coverPresentation ? { objectPosition: focalPositions[coverPresentation.focalPoint] } : undefined}
+                />
+              </a>
+              <div class="feature-copy">
+                <p class="feature-copy__eyebrow">Agora</p>
+                <p class="meta-line">{formatShortDate(latest.data.date)}{latest.data.location ? ` · ${latest.data.location}` : ""}</p>
+                <h2 id="latest-title">{latest.data.title}</h2>
+                {latest.data.excerpt ? <p class="feature-copy__excerpt">{latest.data.excerpt}</p> : null}
+                <a class="text-link" href={withBase(`/ensaios/${latestSlug}/`)}>Ler ensaio <span aria-hidden="true">↗</span></a>
+              </div>
+            </section>
+
+            {remaining.length ? (
+              <section aria-labelledby="more-title">
+                <div class="section-heading">
+                  <div>
+                    <p class="section-heading__eyebrow">Em público</p>
+                    <h2 id="more-title">Outros ensaios</h2>
+                  </div>
+                  <p>{remaining.length} {remaining.length === 1 ? "ensaio permanece" : "ensaios permanecem"} por aqui.</p>
+                </div>
+                <div class="essay-list">
+                  {remaining.map((essay, index) => <EssayCard essay={essay} index={index} />)}
+                </div>
+              </section>
+            ) : null}
+          </section>
+
+          <section id="mosaico" class="home-view home-view--mosaic" data-home-panel="mosaico" aria-label="Visualização em mosaico">
+            <MosaicCollections essays={essays} />
+          </section>
+
+          <script is:inline>
+            (() => {
+              const controls = [...document.querySelectorAll("[data-view-control]")];
+              const panels = [...document.querySelectorAll("[data-home-panel]")];
+              if (!controls.length || !panels.length) return;
+
+              const activate = (view) => {
+                const selected = view === "mosaico" ? "mosaico" : "ensaios";
+                controls.forEach((control) => {
+                  const active = control.dataset.viewControl === selected;
+                  if (active) control.setAttribute("aria-current", "true");
+                  else control.removeAttribute("aria-current");
+                });
+                panels.forEach((panel) => {
+                  panel.hidden = panel.dataset.homePanel !== selected;
+                });
+              };
+
+              const fromHash = () => activate(location.hash === "#mosaico" ? "mosaico" : "ensaios");
+              controls.forEach((control) => control.addEventListener("click", () => activate(control.dataset.viewControl)));
+              window.addEventListener("hashchange", fromHash);
+              fromHash();
+            })();
+          </script>
+        </>
+      ) : <EmptyState />
+    }
+  </main>
+</BaseLayout>

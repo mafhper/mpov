@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Estúdio local · Meu ponto de vista</title>
+    <link rel="stylesheet" href="/studio.css" />
+  </head>
+  <body>
+    <main id="app" class="studio-app" aria-live="polite">
+      <p class="loading">Abrindo o estúdio local…</p>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <dialog id="dialog" class="dialog"></dialog>
+    <noscript>
+      <p class="noscript">O estúdio precisa de JavaScript para editar os arquivos locais.</p>
+    </noscript>
+    <script>
+      window.MPOV_STUDIO_TOKEN = __MPOV_STUDIO_TOKEN__;
+    </script>
+    <script type="module" src="/studio.js"></script>
+  </body>
+</html>

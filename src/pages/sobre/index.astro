@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { githubProfileUrl, siteConfig } from "../../config/site";
+
+const profile = siteConfig.profile.github
+  ? {
+      href: `https://github.com/${siteConfig.profile.github}`,
+      src: githubProfileUrl(siteConfig.profile.github),
+      alt: siteConfig.profile.alt,
+    }
+  : undefined;
+---
+
+<BaseLayout title="Sobre">
+  <main id="conteudo" class="about-page container">
+    <div class="about-page__layout">
+      {profile ? (
+        <figure class="about-page__figure">
+          <a class="about-page__portrait" href={profile.href} aria-label={`Perfil de ${siteConfig.author} no GitHub`}>
+            <img src={profile.src} alt={profile.alt} width="512" height="512" referrerpolicy="no-referrer" />
+          </a>
+          <figcaption>{siteConfig.author}</figcaption>
+        </figure>
+      ) : null}
+      <article class="about-page__statement">
+        <p class="page-heading__eyebrow">Este espaço</p>
+        <h1>Sobre</h1>
+        <p class="about-page__copy">{siteConfig.about}</p>
+        <footer class="about-page__credit">
+          <span>por {siteConfig.author}</span>
+          {profile ? <a class="text-link" href={profile.href}>Ver no GitHub <span aria-hidden="true">↗</span></a> : null}
+        </footer>
+      </article>
+    </div>
+  </main>
+</BaseLayout>
