@@ -58,7 +58,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: astro build && npm run report:build && npm run check:links && npm run check:studio-boundary
+        run: npm run build
 
       - name: Conferir que o build produziu algo
         run: |
@@ -68,7 +68,7 @@ jobs:
           n=$(ls -d dist 2>/dev/null | wc -l)
           if [ "$n" -eq 0 ]; then
             echo "::error::o build nao produziu dist/"
-            echo "o comando de build deste projeto e: astro build && npm run report:build && npm run check:links && npm run check:studio-boundary"
+            echo "o comando de build deste projeto e: npm run build"
             echo "o que apareceu na raiz depois do build:"
             ls -1 || true
             echo "se a saida for outra, rode de novo com --saida <dir> (ou --saida 'packages/*/dist')"
