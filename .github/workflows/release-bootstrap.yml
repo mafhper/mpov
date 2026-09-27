@@ -1,0 +1,119 @@
+# Gerado por dev-dashboard: tools/release-bootstrap.mjs
+#
+# PRIMEIRA release. O objetivo não é substituir o release-core — é fazer a tag
+# deixar de ser um nome solto. Uma tag sem artefato não deixa rastro: ninguém
+# baixa v0.1.0 porque não há o que baixar.
+#
+# Quando o projeto adotar o release-core (ADR-002, do release-core), este arquivo
+# deve ser REMOVIDO: os dois publicariam a mesma tag. Enquanto ele existir, é o
+# único caminho de release.
+#
+# Contrato do pacote: dist/ empacotado num ZIP, com um MANIFESTO que diz
+# versão, commit e data. É artefato de rastro e auditabilidade, não de entrega — não é o
+# que o usuário instala.
+
+name: release-bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: 'Versão sem o "v" (ex.: 0.1.0)'
+        required: true
+        type: string
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-bootstrap-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '>=24.0.0'
+
+      - name: Instalar
+        run: npm ci
+
+      - name: Build
+        run: astro build && npm run report:build && npm run check:links && npm run check:studio-boundary
+
+      - name: Conferir que o build produziu algo
+        run: |
+          # o glob resolve o monorepo: em 'turbo run build' / '--workspaces' o dist
+          # nasce DENTRO de cada pacote, e um 'ls dist' na raiz nao acha — o que faria
+          # o workflow reprovar num projeto que builda certo. A contagem e' o que decide.
+          n=$(ls -d dist 2>/dev/null | wc -l)
+          if [ "$n" -eq 0 ]; then
+            echo "::error::o build nao produziu dist/"
+            echo "o comando de build deste projeto e: astro build && npm run report:build && npm run check:links && npm run check:studio-boundary"
+            echo "o que apareceu na raiz depois do build:"
+            ls -1 || true
+            echo "se a saida for outra, rode de novo com --saida <dir> (ou --saida 'packages/*/dist')"
+            exit 1
+          fi
+          echo "artefato: $n diretorio(s) dist · $(du -shc $(ls -d dist) 2>/dev/null | tail -1 | cut -f1)"
+
+      - name: Empacotar
+        id: pack
+        run: |
+          set -euo pipefail
+          TAG="v${{ inputs.versao || github.ref_name }}"
+          VER="${TAG#v}"
+          NOME="$(basename "$REPO")-$VER.zip"
+          # o MANIFESTO torna o artefato auto-descritivo: um ZIP solto nao diz
+          # de que commit veio, e um release sem isso obriga a adivinhacao
+          {
+            echo "projeto:   $(basename "$REPO")"
+            echo "versao:    $VER"
+            echo "tag:       $TAG"
+            echo "commit:    ${{ github.sha }}"
+            echo "data:      $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "node:      $(node -v)"
+            echo "conteudo:  dist"
+            echo
+            echo "gerado por release-bootstrap.yml (dev-dashboard). Primeira release:"
+            echo "artefato de rastro e auditabilidade, nao de entrega."
+          } > MANIFESTO.txt
+          zip -r "$NOME" $(ls -d dist) MANIFESTO.txt
+          echo "path=$NOME" >> "$GITHUB_OUTPUT"
+          echo "size=$(du -h "$NOME" | cut -f1)"
+
+      - name: Criar tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          TAG="v${{ inputs.versao }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "a tag $TAG ja existe — nada a criar"
+          else
+            git tag -a "$TAG" -m "release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Publicar a release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ inputs.versao || github.ref_name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "a release $TAG ja existe — o ZIP sera re-anexado"
+            gh release upload "$TAG" "${{ steps.pack.outputs.path }}" --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Primeira release de $(basename "$REPO"). Artefato: `${{ steps.pack.outputs.size }}` — gerado por `release-bootstrap.yml`. Quando este projeto adotar o [release-core](https://github.com/mafhper/release-core), este workflow sai e a release passa a ser montada pelo Core." \
+              "${{ steps.pack.outputs.path }}"
+          fi
