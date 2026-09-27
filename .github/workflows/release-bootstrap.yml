@@ -18,11 +18,22 @@ on:
   workflow_dispatch:
     inputs:
       versao:
+        # ASPAS DUPLAS por default, porque e' o que o prettier usa. O format:check de um projeto
+        # roda prettier sobre o repositorio INTEIRO, workflow gerado incluido - e um arquivo
+        # gerado que reprova o gate do proprio projeto e' pior que nao gerado. Medido no mpov: o
+        # prettier mudava exatamente 2 linhas, e as duas eram so isto.
+        #
+        # A excecao e' a linha de description abaixo, que fica com aspa SIMPLES porque o conteudo
+        # contem aspa dupla. E' a regra do prettier, nao uma excecao minha.
+        #
+        # (nenhuma crase entra neste comentario: o WF abaixo e' um template literal, e uma crase
+        # aqui fecha a string antes da hora - e o sintoma e' um SyntaxError que so aparece quando
+        # se roda o gerador de novo)
         description: 'Versão sem o "v" (ex.: 0.1.0)'
         required: true
         type: string
   push:
-    tags: ['v*']
+    tags: ["v*"]
 
 permissions:
   contents: write
@@ -41,7 +52,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '>=24.0.0'
+          node-version: ">=24.0.0"
 
       - name: Instalar
         run: npm ci
