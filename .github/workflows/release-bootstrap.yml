@@ -110,6 +110,11 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
+          # O runner nao tem identidade git, e 'git tag -a' exige uma — sem isso: "Committer
+          # identity unknown" e exit 128. A identidade vem do ATOR: a tag fica em nome de quem
+          # disparou, que e' a autoria correta. Nao e' um nome de ferramenta — e' a pessoa.
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
           TAG="v${{ inputs.versao }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "a tag $TAG ja existe — nada a criar"
