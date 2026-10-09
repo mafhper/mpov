@@ -2,6 +2,8 @@
 
 Site de uma publicação fotográfica. Este repositório guarda apenas o código: as fotografias e os textos não entram no Git e ficam na máquina do autor. É a build gerada a partir deles que é publicada — por isso a página pública tem as imagens, e o histórico do repositório não.
 
+Site público: <https://mafhper.github.io/mpov/>.
+
 ## Stack
 
 Astro estático · TypeScript estrito · CSS nativo · Node 24 · GitHub CLI
@@ -51,9 +53,3 @@ npm run test:e2e       # navegador
 ```
 
 O CI roda os mesmos passos, com `npm ci` e Actions fixadas por SHA.
-
-## Mais
-
-As decisões de arquitetura, com as opções descartadas, estão em [docs/decisions](docs/decisions).
-
-Site público: <https://mafhper.github.io/mpov/>.

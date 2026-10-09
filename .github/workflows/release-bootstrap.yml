@@ -1,12 +1,4 @@
-# Gerado por dev-dashboard: tools/release-bootstrap.mjs
-#
-# PRIMEIRA release. O objetivo não é substituir o release-core — é fazer a tag
-# deixar de ser um nome solto. Uma tag sem artefato não deixa rastro: ninguém
-# baixa v0.1.0 porque não há o que baixar.
-#
-# Quando o projeto adotar o release-core (ADR-002, do release-core), este arquivo
-# deve ser REMOVIDO: os dois publicariam a mesma tag. Enquanto ele existir, é o
-# único caminho de release.
+# Publica uma tag anotada a partir da build atual.
 #
 # Contrato do pacote: dist/ empacotado num ZIP, com um MANIFESTO que diz
 # versão, commit e data. É artefato de rastro e auditabilidade, não de entrega — não é o
@@ -80,10 +72,9 @@ jobs:
         id: pack
         run: |
           set -euo pipefail
-          # REPO era usado em tres lugares e nunca estava definido. Sob 'set -u' — que este passo
-          # usa de proposito, para o artefato nunca sair pela metade — uma variavel indefinida e'
-          # erro FATAL, e nao valor vazio. O workflow reprovou em 'Empacotar' com exit 1 sem
-          # mensagem util: foi a segunda falha real que so o runner descobriria.
+          # REPO e' definida aqui porque este passo a usa em tres lugares. Sob 'set -u' — que
+          # este passo usa de proposito, para o artefato nunca sair pela metade — uma variavel
+          # indefinida e' erro FATAL, e nao valor vazio.
           REPO="${{ github.repository }}"
           TAG="v${{ inputs.versao || github.ref_name }}"
           VER="${TAG#v}"
@@ -99,7 +90,7 @@ jobs:
             echo "node:      $(node -v)"
             echo "conteudo:  dist"
             echo
-            echo "gerado por release-bootstrap.yml (dev-dashboard). Primeira release:"
+            echo "gerado por release-bootstrap.yml."
             echo "artefato de rastro e auditabilidade, nao de entrega."
           } > MANIFESTO.txt
           zip -r "$NOME" $(ls -d dist) MANIFESTO.txt
@@ -127,7 +118,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # a mesma correcao de antes: a variavel que nao existia, e o 'set -u' que a torna fatal
           REPO="${{ github.repository }}"
           set -euo pipefail
           TAG="v${{ inputs.versao || github.ref_name }}"
@@ -137,6 +127,6 @@ jobs:
           else
             gh release create "$TAG" \
               --title "$TAG" \
-              --notes "Primeira release de $(basename "$REPO"). Artefato: `${{ steps.pack.outputs.size }}` — gerado por `release-bootstrap.yml`. Quando este projeto adotar o [release-core](https://github.com/mafhper/release-core), este workflow sai e a release passa a ser montada pelo Core." \
+              --notes "Build estática de $(basename "$REPO"). Artefato: `${{ steps.pack.outputs.size }}` — o pacote contem \`dist/\` e um manifesto com versao, commit e data." \
               "${{ steps.pack.outputs.path }}"
           fi
