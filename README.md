@@ -1,6 +1,6 @@
 # Meu ponto de vista
 
-Site de uma publicação fotográfica. O código é público; fotografias e textos ficam só na máquina do autor.
+Site de uma publicação fotográfica. Este repositório guarda apenas o código: as fotografias e os textos não entram no Git e ficam na máquina do autor. É a build gerada a partir deles que é publicada — por isso a página pública tem as imagens, e o histórico do repositório não.
 
 ## Stack
 
@@ -54,6 +54,6 @@ O CI roda os mesmos passos, com `npm ci` e Actions fixadas por SHA.
 
 ## Mais
 
-[AGENTS.md](AGENTS.md) traz as regras de fronteira e os comandos. As decisões de arquitetura, com as opções descartadas, estão em [docs/decisions](docs/decisions).
+As decisões de arquitetura, com as opções descartadas, estão em [docs/decisions](docs/decisions).
 
 Site público: <https://mafhper.github.io/mpov/>.
